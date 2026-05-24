@@ -1,0 +1,44 @@
+@startuml
+
+class PressureMeasurement {
+    - measurement_date: date
+    - height: float
+    - value: int
+    + to_row(): tuple
+}
+
+class PressureParseError {
+}
+
+class PressureParser {
+    + parse_line(line: str): PressureMeasurement
+    + create_measurement(date_text: str, height_text: str, value_text: str): PressureMeasurement
+}
+
+class PressureModel {
+    - _measurements: list[PressureMeasurement]
+    + measurements: list[PressureMeasurement]
+    + load_from_file(file_path: Path, log_path: Path): int
+    + add_measurement(date_text: str, height_text: str, value_text: str): void
+    + remove_measurement(index: int): void
+    + get_table_rows(): list
+}
+
+class PressureView {
+    - root: Tk
+    - model: PressureModel
+    - data_path: Path
+    - log_path: Path
+    + load_data(): void
+    + update_table(): void
+    + add_measurement(): void
+    + delete_selected_measurement(): void
+}
+
+PressureParser ..> PressureMeasurement
+PressureParser ..> PressureParseError
+PressureModel o-- PressureMeasurement
+PressureModel ..> PressureParser
+PressureView --> PressureModel
+
+@enduml
