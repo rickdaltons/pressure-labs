@@ -24,6 +24,12 @@ class PressureMeasurement:
             str(self.value),
         )
 
+    def to_file_line(self) -> str:
+        return (
+            f"Давление {self.measurement_date.strftime(DATE_FORMAT)} "
+            f"{self.height} {self.value}"
+        )
+
 
 class PressureParser:
     LINE_PATTERN = re.compile(
@@ -124,11 +130,28 @@ class PressureModel:
         )
         self._measurements.append(measurement)
 
+    def add_measurement_object(self, measurement: PressureMeasurement) -> None:
+        self._measurements.append(measurement)
+
     def remove_measurement(self, index: int) -> None:
         if index < 0 or index >= len(self._measurements):
             raise IndexError("Некорректный индекс удаляемого объекта.")
 
         del self._measurements[index]
+
+    def remove_by_condition(self, condition) -> int:
+        old_count = len(self._measurements)
+        self._measurements = [
+            measurement
+            for measurement in self._measurements
+            if not condition(measurement)
+        ]
+        return old_count - len(self._measurements)
+
+    def save_to_file(self, file_path: Path) -> None:
+        with open(file_path, "w", encoding="utf-8") as file:
+            for measurement in self._measurements:
+                file.write(measurement.to_file_line() + "\n")
 
     def get_table_rows(self) -> list[tuple[str, str, str]]:
         return [measurement.to_row() for measurement in self._measurements]

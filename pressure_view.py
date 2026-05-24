@@ -1,8 +1,10 @@
 from pathlib import Path
 import tkinter as tk
+from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 
+from command_processor import CommandProcessor
 from pressure_model import PressureModel, PressureParseError
 
 
@@ -18,6 +20,7 @@ class PressureView:
         self.model = model
         self.data_path = data_path
         self.log_path = log_path
+        self.command_processor = CommandProcessor(model, data_path.parent)
 
         self.date_entry: ttk.Entry
         self.height_entry: ttk.Entry
@@ -29,8 +32,8 @@ class PressureView:
         self.load_data()
 
     def configure_window(self) -> None:
-        self.root.title("Практическая работа 3 — Измерения давления")
-        self.root.geometry("750x470")
+        self.root.title("Практическая работа 4 — Измерения давления")
+        self.root.geometry("820x520")
         self.root.resizable(False, False)
 
     def create_widgets(self) -> None:
@@ -52,7 +55,7 @@ class PressureView:
             self.root,
             columns=columns,
             show="headings",
-            height=10,
+            height=11,
         )
 
         self.table.heading("date", text="Дата")
@@ -90,19 +93,25 @@ class PressureView:
             button_frame,
             text="Добавить",
             command=self.add_measurement,
-        ).grid(row=0, column=0, padx=10)
+        ).grid(row=0, column=0, padx=7)
 
         ttk.Button(
             button_frame,
             text="Удалить выбранный",
             command=self.delete_selected_measurement,
-        ).grid(row=0, column=1, padx=10)
+        ).grid(row=0, column=1, padx=7)
 
         ttk.Button(
             button_frame,
-            text="Загрузить из файла",
+            text="Загрузить данные",
             command=self.load_data,
-        ).grid(row=0, column=2, padx=10)
+        ).grid(row=0, column=2, padx=7)
+
+        ttk.Button(
+            button_frame,
+            text="Открыть файл команд",
+            command=self.open_command_file,
+        ).grid(row=0, column=3, padx=7)
 
     def load_data(self) -> None:
         invalid_count = self.model.load_from_file(self.data_path, self.log_path)
@@ -114,6 +123,24 @@ class PressureView:
                 f"Некорректных строк пропущено: {invalid_count}.\n"
                 f"Информация записана в файл: {self.log_path.name}",
             )
+
+    def open_command_file(self) -> None:
+        filename = filedialog.askopenfilename(
+            title="Выберите файл команд",
+            initialdir=self.data_path.parent,
+            filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
+        )
+
+        if not filename:
+            return
+
+        messages = self.command_processor.execute_file(Path(filename))
+        self.update_table()
+
+        messagebox.showinfo(
+            "Результат выполнения команд",
+            "\n".join(messages[:10]),
+        )
 
     def update_table(self) -> None:
         for row in self.table.get_children():

@@ -5,9 +5,13 @@ class PressureMeasurement {
     - height: float
     - value: int
     + to_row(): tuple
+    + to_file_line(): str
 }
 
 class PressureParseError {
+}
+
+class CommandError {
 }
 
 class PressureParser {
@@ -20,8 +24,18 @@ class PressureModel {
     + measurements: list[PressureMeasurement]
     + load_from_file(file_path: Path, log_path: Path): int
     + add_measurement(date_text: str, height_text: str, value_text: str): void
+    + add_measurement_object(measurement: PressureMeasurement): void
     + remove_measurement(index: int): void
+    + remove_by_condition(condition): int
+    + save_to_file(file_path: Path): void
     + get_table_rows(): list
+}
+
+class CommandProcessor {
+    - model: PressureModel
+    - base_dir: Path
+    + execute_file(command_path: Path): list
+    + execute_line(line: str): str
 }
 
 class PressureView {
@@ -29,7 +43,9 @@ class PressureView {
     - model: PressureModel
     - data_path: Path
     - log_path: Path
+    - command_processor: CommandProcessor
     + load_data(): void
+    + open_command_file(): void
     + update_table(): void
     + add_measurement(): void
     + delete_selected_measurement(): void
@@ -39,6 +55,9 @@ PressureParser ..> PressureMeasurement
 PressureParser ..> PressureParseError
 PressureModel o-- PressureMeasurement
 PressureModel ..> PressureParser
+CommandProcessor --> PressureModel
+CommandProcessor ..> CommandError
 PressureView --> PressureModel
+PressureView --> CommandProcessor
 
 @enduml
